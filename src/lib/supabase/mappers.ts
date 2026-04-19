@@ -6,6 +6,7 @@ export type ToolRow = {
   name: string;
   tagline: string;
   description: string;
+  screenshot_src?: string | null;
   category: string;
   rank: number;
   avg_rating: number | string | null;
@@ -31,6 +32,7 @@ export function mapToolRow(row: ToolRow): Tool {
     name: row.name,
     tagline: row.tagline,
     description: row.description,
+    screenshotSrc: row.screenshot_src?.trim() || undefined,
     category: row.category,
     rank: row.rank,
     avgRating: Number.isFinite(avg) ? avg : 0,

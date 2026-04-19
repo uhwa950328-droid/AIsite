@@ -3,11 +3,25 @@
 @tailwind utilities;
 
 :root {
-  --background: #09090b;
+  --background: #020203;
   --foreground: #fafafa;
-  --card: #18181b;
-  --border: #27272a;
+  --card: #0a0a0c;
+  --border: #1a1a1f;
   --muted: #a1a1aa;
+  /** 좌·우·상단 패드 (헤더와 동일 값으로 맞춤) */
+  --page-pad: 1rem;
+  /** 하단은 스크롤 여유 */
+  --page-pad-bottom: 7rem;
+  /** 페이지 주요 블록 사이 세로 간격 */
+  --page-section-gap: 2.5rem;
+  /** 목록·카드 스택 간격 */
+  --page-stack-gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --page-pad: 1.5rem;
+  }
 }
 
 html {

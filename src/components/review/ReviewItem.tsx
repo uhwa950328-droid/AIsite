@@ -1,25 +1,13 @@
 import type { Review } from "@/types/review";
+import { Card } from "@/components/ui/Card";
+import { PartialStarsRow } from "@/components/review/PartialStars";
+import { ReviewReactionBar } from "@/components/review/ReviewReactionBar";
 import { cn } from "@/lib/utils";
 
 type ReviewItemProps = {
   review: Review;
   className?: string;
 };
-
-function Stars({ value }: { value: number }) {
-  return (
-    <span className="flex gap-0.5" aria-label={`${value}점`}>
-      {Array.from({ length: 5 }, (_, i) => (
-        <span
-          key={i}
-          className={cn("text-xs", i < value ? "text-amber-400" : "text-zinc-600")}
-        >
-          ★
-        </span>
-      ))}
-    </span>
-  );
-}
 
 function formatDate(iso: string) {
   try {
@@ -43,20 +31,36 @@ function formatDate(iso: string) {
 
 export function ReviewItem({ review, className }: ReviewItemProps) {
   return (
-    <article
-      className={cn(
-        "rounded-xl border border-border/80 bg-zinc-900/40 px-4 py-3",
-        className,
-      )}
-    >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-medium text-zinc-200">{review.nickname}</span>
-        <Stars value={review.rating} />
-        <time className="ml-auto text-xs text-muted" dateTime={review.createdAt}>
-          {formatDate(review.createdAt)}
-        </time>
-      </div>
-      <p className="mt-2 text-sm leading-relaxed text-zinc-300">{review.body}</p>
+    <article className={cn(className)}>
+      <Card className="border-0 bg-card px-6 py-4 shadow-lg shadow-black/30 transition-colors duration-200 sm:px-8 sm:py-5">
+        <div className="flex min-w-0 flex-nowrap items-center gap-6 overflow-x-auto sm:gap-8">
+          <div className="flex shrink-0 flex-col items-center gap-1 text-sm font-bold tabular-nums leading-none sm:flex-row sm:items-center sm:gap-2 sm:text-base">
+            <PartialStarsRow
+              value={review.rating}
+              ariaLabel={`${review.rating}점 만점 5점`}
+            />
+            <span className="text-zinc-300">{review.rating.toFixed(1)}</span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 whitespace-pre-line text-sm font-medium leading-snug text-white sm:line-clamp-3">
+              {review.body}
+            </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-zinc-500">
+              <span>{review.nickname}</span>
+              <span
+                className="select-none text-[10px] font-light leading-none text-zinc-600"
+                aria-hidden
+              >
+                |
+              </span>
+              <time dateTime={review.createdAt}>{formatDate(review.createdAt)}</time>
+            </div>
+          </div>
+
+          <ReviewReactionBar />
+        </div>
+      </Card>
     </article>
   );
 }

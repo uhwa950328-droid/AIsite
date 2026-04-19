@@ -11,10 +11,12 @@ type ReviewFormProps = {
     rating: number;
     body: string;
   }) => void | Promise<void>;
+  /** 패널·모달 등에서 폼을 접을 때 */
+  onClose?: () => void;
   className?: string;
 };
 
-export function ReviewForm({ onSubmit, className }: ReviewFormProps) {
+export function ReviewForm({ onSubmit, onClose, className }: ReviewFormProps) {
   const [nickname, setNickname] = useState("");
   const [rating, setRating] = useState(5);
   const [body, setBody] = useState("");
@@ -52,13 +54,33 @@ export function ReviewForm({ onSubmit, className }: ReviewFormProps) {
     <form
       onSubmit={handleSubmit}
       className={cn(
-        "space-y-4 rounded-2xl border border-border bg-card/95 p-4 shadow-2xl shadow-black/40 backdrop-blur-md",
+        "space-y-5 rounded-2xl border-0 bg-card px-6 py-6 shadow-lg shadow-black/30 backdrop-blur-md sm:px-8 sm:py-7",
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-foreground">한줄 리뷰 남기기</h3>
-        <span className="text-xs text-muted">닉네임 · 별점 · 한줄평</span>
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-sm font-bold text-foreground">평점 남기기</h3>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="-m-1 shrink-0 rounded-lg p-1.5 text-zinc-500 transition hover:bg-white/[0.08] hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+            aria-label="닫기"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+              aria-hidden
+            >
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        ) : null}
       </div>
       <div>
         <label htmlFor="nickname" className="sr-only">
@@ -71,7 +93,7 @@ export function ReviewForm({ onSubmit, className }: ReviewFormProps) {
           placeholder="닉네임"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          className="w-full rounded-lg border border-border bg-zinc-950/80 px-3 py-2 text-sm text-foreground placeholder:text-zinc-500 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
+          className="w-full rounded-xl border-0 bg-white/[0.06] px-3 py-2 text-sm text-foreground placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/35"
         />
       </div>
       <div>
@@ -101,10 +123,10 @@ export function ReviewForm({ onSubmit, className }: ReviewFormProps) {
         <textarea
           id="body"
           rows={2}
-          placeholder="한줄로 평가를 남겨보세요."
+          placeholder="평가를 남겨보세요"
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          className="w-full resize-none rounded-lg border border-border bg-zinc-950/80 px-3 py-2 text-sm text-foreground placeholder:text-zinc-500 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30"
+          className="w-full resize-none rounded-xl border-0 bg-white/[0.06] px-3 py-2 text-sm text-foreground placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/35"
         />
       </div>
       <button

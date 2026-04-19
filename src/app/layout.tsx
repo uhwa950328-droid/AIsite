@@ -15,8 +15,12 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "AI Rank — 한줄 평가",
-  description: "AI 툴 랭킹 TOP 5와 한줄 리뷰",
+  title: "AI Review",
+  description: "AI 툴 랭킹과 카테고리별 목록, 리뷰",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

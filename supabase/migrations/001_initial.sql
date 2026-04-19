@@ -89,7 +89,7 @@ insert into public.tools (id, name, tagline, description, category, rank, avg_ra
     'ChatGPT',
     '대화형 AI의 기준',
     'OpenAI의 GPT 기반 챗봇으로, 코딩·글쓰기·요약·번역 등 다양한 작업을 자연어로 처리할 수 있습니다. 플러그인과 맞춤 GPT로 워크플로를 확장할 수 있습니다.',
-    '대화·생산성',
+    '생산성',
     1,
     4.80,
     0
@@ -119,7 +119,7 @@ insert into public.tools (id, name, tagline, description, category, rank, avg_ra
     'Claude',
     '긴 문맥에 강한 AI',
     'Anthropic의 AI 어시스턴트로, 긴 문서 분석·코드 리뷰·안전한 답변에 강점이 있습니다. 아티팩트로 코드·문서 미리보기가 가능합니다.',
-    '대화·생산성',
+    '생산성',
     4,
     4.60,
     0

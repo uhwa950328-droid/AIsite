@@ -1,16 +1,22 @@
-import Link from "next/link";
+import { Suspense } from "react";
+import { NavSearch } from "@/components/layout/NavSearch";
+import { SiteHeaderBrand } from "@/components/layout/SiteHeaderBrand";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
-        <Link
-          href="/"
-          className="text-sm font-semibold tracking-tight text-foreground transition hover:text-zinc-300"
+    <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-4xl items-center justify-between gap-3 px-[var(--page-pad)]">
+        <SiteHeaderBrand />
+        <Suspense
+          fallback={
+            <div
+              className="h-9 w-full max-w-[10.5rem] rounded-full bg-zinc-900/50 sm:max-w-[11.5rem]"
+              aria-hidden
+            />
+          }
         >
-          AI Rank
-        </Link>
-        <span className="text-xs text-muted">한줄 평가 · TOP 5</span>
+          <NavSearch />
+        </Suspense>
       </div>
     </header>
   );
