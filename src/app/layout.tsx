@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
+import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import "./globals.css";
 
@@ -34,6 +36,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} min-h-dvh font-sans antialiased`}
         style={{ fontFamily: "var(--font-geist-sans), system-ui, sans-serif" }}
       >
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         <SiteHeader />
         {children}
       </body>

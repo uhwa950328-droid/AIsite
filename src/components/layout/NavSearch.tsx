@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { emitNavigationStart } from "@/lib/navigation-events";
 import { cn } from "@/lib/utils";
 
 function SearchIcon({ className }: { className?: string }) {
@@ -36,7 +37,7 @@ export function NavSearch() {
   }, [isHome, qFromUrl]);
 
   const pushQuery = useCallback(
-    (raw: string) => {
+    (raw: string, opts?: { silent?: boolean }) => {
       const q = raw.trim();
       const params = new URLSearchParams();
       if (q) params.set("q", q);
@@ -45,8 +46,10 @@ export function NavSearch() {
       const s = params.toString();
       const href = s ? `/?${s}` : "/";
       if (isHome) {
+        if (!opts?.silent) emitNavigationStart();
         router.replace(href);
       } else if (q) {
+        emitNavigationStart();
         router.push(href);
       }
     },
@@ -81,7 +84,7 @@ export function NavSearch() {
           onChange={(e) => {
             const v = e.target.value;
             setValue(v);
-            if (isHome) pushQuery(v);
+            if (isHome) pushQuery(v, { silent: true });
           }}
           className="min-w-0 flex-1 bg-transparent text-sm text-foreground placeholder:text-zinc-500 outline-none"
           autoComplete="off"

@@ -38,4 +38,18 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
+  /** 상단 네비게이션 진행 바 */
+  .animate-nav-progress {
+    animation: nav-progress-scan 1.05s linear infinite;
+  }
+}
+
+@keyframes nav-progress-scan {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
