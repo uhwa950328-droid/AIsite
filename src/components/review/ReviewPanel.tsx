@@ -175,6 +175,7 @@ export function ReviewPanel({
             return sortReviews([r, ...prev]);
           });
         }
+        router.refresh();
         setComposerExpanded(false);
         return;
       }
@@ -198,7 +199,7 @@ export function ReviewPanel({
       );
       setComposerExpanded(false);
     },
-    [supabase, toolId],
+    [supabase, toolId, router],
   );
 
   const bottomPad = composerExpanded
