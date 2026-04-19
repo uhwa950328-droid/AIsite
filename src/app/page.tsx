@@ -50,31 +50,18 @@ export default async function HomePage({ searchParams }: PageProps) {
     title = "AI TOOL RANKING";
   }
 
-  let description: string;
-  if (hasQuery && hasCategory) {
-    description = `“${qRaw.trim()}” 검색 결과 중 ${getCategoryLabel(categorySlug)} 카테고리입니다.`;
-  } else if (hasQuery) {
-    description = `이름·한줄·설명·카테고리에서 “${qRaw.trim()}”와 맞는 툴입니다.`;
-  } else if (hasCategory) {
-    description = `${getCategoryLabel(categorySlug)} 카테고리 툴을 평점·리뷰 순으로 모두 보여 줍니다.`;
-  } else {
-    description =
-      "등록된 AI 툴 전체를 평점 순으로 보여 줍니다. 카드를 눌러 평점을 확인하세요.";
-  }
-
   return (
     <PageContainer>
       <HomeLeaderboardRealtime supabaseEnabled={supabaseEnabled} />
       <div className="flex flex-col gap-[var(--page-section-gap)]">
-        <div className="w-full text-center">
+        <div className="w-full py-4 text-center sm:py-8">
           <div className="space-y-2">
             <p className="text-xs font-medium tracking-wide text-violet-400/90">
               2026년 상반기 기준
             </p>
             <h1 className={cnTitle(hasQuery || hasCategory)}>{title}</h1>
           </div>
-          <div className="mt-3 space-y-6">
-            <p className="text-sm leading-relaxed text-muted">{description}</p>
+          <div className="mt-6">
             <Suspense fallback={<div className="h-10" aria-hidden />}>
               <CategoryChips active={categorySlug} />
             </Suspense>
