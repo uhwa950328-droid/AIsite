@@ -7,7 +7,6 @@ import { ReviewSectionSummary } from "@/components/review/ReviewSectionSummary";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { fetchReviewsForTool } from "@/lib/queries/reviews";
 import { fetchToolById } from "@/lib/queries/tools";
-import { tools } from "@/data/tools";
 import type { Tool } from "@/types/tool";
 
 type PageProps = {
@@ -15,10 +14,6 @@ type PageProps = {
 };
 
 export const dynamic = "force-dynamic";
-
-export function generateStaticParams() {
-  return tools.map((t) => ({ id: t.id }));
-}
 
 export async function generateMetadata({ params }: PageProps) {
   const tool = await fetchToolById(params.id);

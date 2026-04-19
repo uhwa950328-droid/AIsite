@@ -82,7 +82,7 @@ create trigger tr_reviews_stats
   for each row
   execute function public.refresh_tool_review_stats();
 
--- Seed tools (ids must match src/data/tools.ts)
+-- Seed tools
 insert into public.tools (id, name, tagline, description, category, rank, avg_rating, review_count) values
   (
     'chatgpt',

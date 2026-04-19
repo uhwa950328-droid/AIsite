@@ -4,7 +4,7 @@ alter table public.tools
 
 comment on column public.tools.screenshot_src is 'Public URL path or absolute URL for tool hero screenshot';
 
--- 시드 경로는 src/data/tools.ts 의 screenshotSrc 와 동일하게 유지
+-- 시드 스크린샷 경로(public/screenshots/*.png)
 update public.tools set screenshot_src = '/screenshots/chatgpt.png' where id = 'chatgpt';
 update public.tools set screenshot_src = '/screenshots/midjourney.png' where id = 'midjourney';
 update public.tools set screenshot_src = '/screenshots/dall-e.png' where id = 'dall-e';

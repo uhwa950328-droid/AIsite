@@ -1,6 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getAllTools, getTopTools, getToolById } from "@/data/tools";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { mapToolRow, type ToolRow } from "@/lib/supabase/mappers";
 import type { Tool } from "@/types/tool";
@@ -37,10 +36,19 @@ async function fetchReviewSnippetsByToolIds(
   return map;
 }
 
+function logNoSupabase(context: string) {
+  console.error(
+    `[${context}] Supabase 서버 클라이언트를 만들 수 없습니다. NEXT_PUBLIC_SUPABASE_URL·NEXT_PUBLIC_SUPABASE_ANON_KEY(또는 SUPABASE_URL·SUPABASE_ANON_KEY)를 설정하세요.`,
+  );
+}
+
 export async function fetchTopTools(limit = 5): Promise<Tool[]> {
   noStore();
   const supabase = getSupabaseServerClient();
-  if (!supabase) return getTopTools(limit);
+  if (!supabase) {
+    logNoSupabase("fetchTopTools");
+    return [];
+  }
 
   const { data, error } = await supabase
     .from("tools")
@@ -52,10 +60,10 @@ export async function fetchTopTools(limit = 5): Promise<Tool[]> {
 
   if (error) {
     console.error("[fetchTopTools]", error.message, error);
-    return getTopTools(limit);
+    return [];
   }
 
-  if (!data?.length) return getTopTools(limit);
+  if (!data?.length) return [];
   const tools = (data as ToolRow[]).map((row, i) => {
     const tool = mapToolRow(row);
     return { ...tool, rank: i + 1 };
@@ -73,7 +81,10 @@ export async function fetchTopTools(limit = 5): Promise<Tool[]> {
 export async function fetchAllTools(): Promise<Tool[]> {
   noStore();
   const supabase = getSupabaseServerClient();
-  if (!supabase) return getAllTools();
+  if (!supabase) {
+    logNoSupabase("fetchAllTools");
+    return [];
+  }
 
   const { data, error } = await supabase
     .from("tools")
@@ -84,10 +95,10 @@ export async function fetchAllTools(): Promise<Tool[]> {
 
   if (error) {
     console.error("[fetchAllTools]", error.message, error);
-    return getAllTools();
+    return [];
   }
 
-  if (!data?.length) return getAllTools();
+  if (!data?.length) return [];
   const tools = (data as ToolRow[]).map((row, i) => {
     const tool = mapToolRow(row);
     return { ...tool, rank: i + 1 };
@@ -105,7 +116,10 @@ export async function fetchAllTools(): Promise<Tool[]> {
 export async function fetchToolById(id: string): Promise<Tool | undefined> {
   noStore();
   const supabase = getSupabaseServerClient();
-  if (!supabase) return getToolById(id);
+  if (!supabase) {
+    logNoSupabase("fetchToolById");
+    return undefined;
+  }
 
   const { data, error } = await supabase
     .from("tools")
@@ -115,14 +129,13 @@ export async function fetchToolById(id: string): Promise<Tool | undefined> {
 
   if (error) {
     console.error("[fetchToolById]", id, error.message, error);
-    return getToolById(id);
+    return undefined;
   }
 
-  if (!data) return getToolById(id);
+  if (!data) return undefined;
   const tool = mapToolRow(data as ToolRow);
   const snippetMap = await fetchReviewSnippetsByToolIds(supabase, [id]);
 
-  // fetchAllTools와 동일 정렬로 순위 부여 (DB `rank` 컬럼과 불일치할 수 있음)
   const { data: orderRows, error: orderError } = await supabase
     .from("tools")
     .select("id")
