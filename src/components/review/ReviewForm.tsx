@@ -93,7 +93,7 @@ export function ReviewForm({ onSubmit, onClose, className }: ReviewFormProps) {
           placeholder="닉네임"
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
-          className="w-full rounded-xl border-0 bg-white/[0.06] px-3 py-2 text-sm text-foreground placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/35"
+          className="w-full rounded-xl border-0 bg-white/[0.06] px-3 py-2 text-base text-foreground placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/35 sm:text-sm"
         />
       </div>
       <div>
@@ -126,7 +126,7 @@ export function ReviewForm({ onSubmit, onClose, className }: ReviewFormProps) {
           placeholder="평가를 남겨보세요"
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          className="w-full resize-none rounded-xl border-0 bg-white/[0.06] px-3 py-2 text-sm text-foreground placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/35"
+          className="w-full resize-none rounded-xl border-0 bg-white/[0.06] px-3 py-2 text-base text-foreground placeholder:text-zinc-500 sm:text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/35"
         />
       </div>
       <button

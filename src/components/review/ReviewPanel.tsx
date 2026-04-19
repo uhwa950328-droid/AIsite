@@ -36,6 +36,14 @@ function mergeReviewsFromServer(prev: Review[], server: Review[]): Review[] {
 
 const SCROLL_DOWN_ACCUM_PX = 48;
 
+function isTypingInReviewComposer(): boolean {
+  const el = document.activeElement;
+  if (!el || !(el instanceof HTMLElement)) return false;
+  const tag = el.tagName;
+  if (tag !== "INPUT" && tag !== "TEXTAREA") return false;
+  return el.closest("[data-review-composer]") !== null;
+}
+
 export function ReviewPanel({
   toolId,
   initialReviews,
@@ -99,6 +107,13 @@ export function ReviewPanel({
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         if (!composerExpandedRef.current) {
+          scrollDir.current = null;
+          scrollAccum.current = 0;
+          return;
+        }
+
+        if (isTypingInReviewComposer()) {
+          lastScrollY.current = window.scrollY;
           scrollDir.current = null;
           scrollAccum.current = 0;
           return;
@@ -204,7 +219,10 @@ export function ReviewPanel({
 
       {composerExpanded ? (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-gradient-to-t from-background via-background/95 to-transparent pt-10">
-          <div className="pointer-events-auto mx-auto w-full max-w-4xl px-[var(--page-pad)] pb-[calc(2rem+env(safe-area-inset-bottom))] sm:pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
+          <div
+            className="pointer-events-auto mx-auto w-full max-w-4xl px-[var(--page-pad)] pb-[calc(2rem+env(safe-area-inset-bottom))] sm:pb-[calc(2.5rem+env(safe-area-inset-bottom))]"
+            data-review-composer
+          >
             <div className="w-full overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] will-change-[max-height,opacity,transform] max-h-[min(70vh,560px)] translate-y-0 opacity-100">
               <ReviewForm
                 className="mb-4 sm:mb-6"
