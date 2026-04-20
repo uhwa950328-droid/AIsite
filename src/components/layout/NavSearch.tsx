@@ -59,7 +59,7 @@ export function NavSearch() {
   return (
     <form
       role="search"
-      className="w-full max-w-[10.5rem] sm:max-w-[11.5rem]"
+      className="ml-auto w-full min-w-0 max-w-[11.5rem]"
       onSubmit={(e) => {
         e.preventDefault();
         pushQuery(value);

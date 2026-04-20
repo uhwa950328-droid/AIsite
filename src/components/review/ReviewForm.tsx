@@ -59,7 +59,7 @@ export function ReviewForm({ onSubmit, onClose, className }: ReviewFormProps) {
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-sm font-bold text-foreground">평점 남기기</h3>
+        <h3 className="text-base font-bold text-foreground">평점 남기기</h3>
         {onClose ? (
           <button
             type="button"

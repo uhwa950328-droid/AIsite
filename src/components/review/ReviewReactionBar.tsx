@@ -41,7 +41,7 @@ export function ReviewReactionBar() {
   const [dislikes, setDislikes] = useState(0);
 
   const onLike = useCallback(() => {
-    setLikes((n) => n + 1);
+    setLikes((n) => (n >= 1 ? 0 : 1));
   }, []);
 
   const onDislike = useCallback(() => {
@@ -57,6 +57,7 @@ export function ReviewReactionBar() {
       <button
         type="button"
         onClick={onLike}
+        aria-pressed={likes >= 1}
         className="flex items-center gap-1 rounded-md text-xs tabular-nums transition-colors hover:bg-white/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 sm:text-sm"
         aria-label="좋아요"
       >

@@ -82,7 +82,7 @@ function ToolDetailHero({
             </p>
             <h1
               id="tool-detail-title"
-              className="mt-1 text-4xl font-bold tracking-tight sm:text-5xl sm:tracking-tighter"
+              className="mt-1.5 text-4xl font-bold tracking-tight sm:text-5xl sm:tracking-tighter"
             >
               {tool.name}
             </h1>
@@ -96,7 +96,7 @@ function ToolDetailHero({
               </span>
             </div>
 
-            <p className="mt-5 max-w-full text-sm leading-relaxed text-white/85 sm:max-w-[50%] sm:text-base">
+            <p className="mt-5 max-w-[80%] break-keep break-words text-sm leading-relaxed text-white/85 sm:max-w-[50%] sm:text-base">
               {tool.description}
             </p>
           </div>
@@ -121,7 +121,7 @@ export default async function ToolDetailPage({ params }: PageProps) {
       <div className="flex flex-col gap-[var(--page-section-gap)]">
         <ToolDetailHero tool={tool} hasReviews={hasReviews} />
 
-        <section className="flex w-full flex-col gap-[var(--page-section-gap)]">
+        <section className="flex w-full flex-col gap-6">
           <ReviewSectionSummary
             avgRating={tool.avgRating}
             reviewCount={tool.reviewCount}

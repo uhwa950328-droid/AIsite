@@ -34,7 +34,8 @@ function mergeReviewsFromServer(prev: Review[], server: Review[]): Review[] {
   return sortReviews(Array.from(byId.values()));
 }
 
-const SCROLL_DOWN_ACCUM_PX = 48;
+/** 접힌 상태에서 아래로 이 정도 스크롤하면 작성 폼 자동 펼침 */
+const SCROLL_DOWN_TO_OPEN_ACCUM_PX = 56;
 
 function isTypingInReviewComposer(): boolean {
   const el = document.activeElement;
@@ -53,8 +54,10 @@ export function ReviewPanel({
   const [reviews, setReviews] = useState<Review[]>(() =>
     sortReviews(initialReviews),
   );
-  const [composerExpanded, setComposerExpanded] = useState(true);
-  const composerExpandedRef = useRef(true);
+  const [composerExpanded, setComposerExpanded] = useState(false);
+  const composerExpandedRef = useRef(false);
+  /** 스크롤로 자동 펼침을 이미 한 번 썼는지 (방문당 1회) */
+  const scrollToOpenDoneRef = useRef(false);
   const lastScrollY = useRef(0);
   const scrollAccum = useRef(0);
   const scrollDir = useRef<"down" | null>(null);
@@ -106,12 +109,6 @@ export function ReviewPanel({
     const onScroll = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        if (!composerExpandedRef.current) {
-          scrollDir.current = null;
-          scrollAccum.current = 0;
-          return;
-        }
-
         if (isTypingInReviewComposer()) {
           lastScrollY.current = window.scrollY;
           scrollDir.current = null;
@@ -125,21 +122,36 @@ export function ReviewPanel({
 
         if (Math.abs(delta) < 0.5) return;
 
-        if (delta > 0) {
-          if (scrollDir.current !== "down") {
-            scrollAccum.current = 0;
-            scrollDir.current = "down";
-          }
-          scrollAccum.current += delta;
-          if (scrollAccum.current >= SCROLL_DOWN_ACCUM_PX) {
-            setComposerExpanded(false);
-            scrollAccum.current = 0;
+        if (!composerExpandedRef.current) {
+          if (scrollToOpenDoneRef.current) {
             scrollDir.current = null;
+            scrollAccum.current = 0;
+            return;
           }
-        } else {
-          scrollDir.current = null;
-          scrollAccum.current = 0;
+          if (delta > 0) {
+            if (scrollDir.current !== "down") {
+              scrollAccum.current = 0;
+              scrollDir.current = "down";
+            }
+            scrollAccum.current += delta;
+            if (scrollAccum.current >= SCROLL_DOWN_TO_OPEN_ACCUM_PX) {
+              scrollToOpenDoneRef.current = true;
+              composerExpandedRef.current = true;
+              setComposerExpanded(true);
+              scrollAccum.current = 0;
+              scrollDir.current = null;
+              lastScrollY.current = window.scrollY;
+            }
+          } else {
+            scrollDir.current = null;
+            scrollAccum.current = 0;
+          }
+          return;
         }
+
+        // 펼친 뒤에는 스크롤로 접지 않음 — 닫기·제출만 접힘
+        scrollDir.current = null;
+        scrollAccum.current = 0;
       });
     };
 
@@ -149,6 +161,23 @@ export function ReviewPanel({
       window.removeEventListener("scroll", onScroll);
     };
   }, []);
+
+  const closeComposer = useCallback(() => {
+    lastScrollY.current = window.scrollY;
+    scrollAccum.current = 0;
+    scrollDir.current = null;
+    composerExpandedRef.current = false;
+    setComposerExpanded(false);
+  }, []);
+
+  useEffect(() => {
+    if (!composerExpanded) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeComposer();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [composerExpanded, closeComposer]);
 
   const handleSubmit = useCallback(
     async (payload: { nickname: string; rating: number; body: string }) => {
@@ -176,7 +205,7 @@ export function ReviewPanel({
           });
         }
         router.refresh();
-        setComposerExpanded(false);
+        closeComposer();
         return;
       }
 
@@ -197,9 +226,9 @@ export function ReviewPanel({
           ...prev,
         ]),
       );
-      setComposerExpanded(false);
+      closeComposer();
     },
-    [supabase, toolId, router],
+    [supabase, toolId, router, closeComposer],
   );
 
   const bottomPad = composerExpanded
@@ -219,36 +248,39 @@ export function ReviewPanel({
       </section>
 
       {composerExpanded ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-gradient-to-t from-background via-background/95 to-transparent pt-10">
+        <>
           <div
-            className="pointer-events-auto mx-auto w-full max-w-4xl px-[var(--page-pad)] pb-[calc(2rem+env(safe-area-inset-bottom))] sm:pb-[calc(2.5rem+env(safe-area-inset-bottom))]"
-            data-review-composer
-          >
-            <div className="w-full overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] will-change-[max-height,opacity,transform] max-h-[min(70vh,560px)] translate-y-0 opacity-100">
-              <ReviewForm
-                className="mb-4 sm:mb-6"
-                onSubmit={handleSubmit}
-                onClose={() => {
-                  lastScrollY.current = window.scrollY;
-                  scrollAccum.current = 0;
-                  scrollDir.current = null;
-                  setComposerExpanded(false);
-                }}
-              />
+            className="fixed bottom-0 left-0 right-0 z-[45] bg-zinc-950/70 backdrop-blur-sm top-[calc(-1*max(4px,env(safe-area-inset-top,0px)))] min-h-[calc(100dvh+max(4px,env(safe-area-inset-top,0px)))]"
+            aria-hidden
+            onClick={closeComposer}
+          />
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-gradient-to-t from-background via-background/95 to-transparent pt-10">
+            <div
+              className="pointer-events-auto mx-auto w-full max-w-4xl px-[var(--page-pad)] pb-[calc(2rem+env(safe-area-inset-bottom))] sm:pb-[calc(2.5rem+env(safe-area-inset-bottom))]"
+              data-review-composer
+            >
+              <div className="w-full overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] will-change-[max-height,opacity,transform] max-h-[min(70vh,560px)] translate-y-0 opacity-100">
+                <ReviewForm
+                  className="mb-4 sm:mb-6"
+                  onSubmit={handleSubmit}
+                  onClose={closeComposer}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </>
       ) : (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-gradient-to-t from-background via-background/95 to-transparent pt-10">
           <div className="pointer-events-auto mx-auto flex w-full max-w-4xl justify-center px-[var(--page-pad)] pb-[calc(2rem+env(safe-area-inset-bottom))] sm:pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
             <button
               type="button"
-              className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-950/40 ring-1 ring-white/15 transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99]"
+              className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-950/40 ring-1 ring-white/15 transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99]"
               aria-label="평점 남기기"
               onClick={() => {
                 lastScrollY.current = window.scrollY;
                 scrollAccum.current = 0;
                 scrollDir.current = null;
+                composerExpandedRef.current = true;
                 setComposerExpanded(true);
               }}
             >
