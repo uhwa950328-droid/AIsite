@@ -29,7 +29,7 @@ export function SiteHeaderBrand() {
     return (
       <Link
         href="/"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted transition-colors hover:bg-white/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-label="랭킹으로 돌아가기"
       >
         <ChevronBackIcon className="h-5 w-5" />

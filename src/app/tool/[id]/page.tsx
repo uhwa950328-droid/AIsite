@@ -71,8 +71,14 @@ function ToolDetailHero({
 
         <div className="relative z-[2] pb-8 pt-24 sm:pb-10 sm:pt-32">
           <div className="w-full text-left text-white">
-            <p className="text-2xl font-bold tracking-tight sm:text-3xl">
-              {rankLabel}
+            <p className="text-medium font-bold tracking-tight sm:text-medium">
+              {hasReviews ? (
+                <span className="rank-top-badge inline-flex items-center rounded-md border border-violet-400/40 bg-violet-600/35 px-2.5 py-1 leading-none text-violet-50 shadow-sm shadow-violet-950/50">
+                  {rankLabel}
+                </span>
+              ) : (
+                <span className="text-white/90">{rankLabel}</span>
+              )}
             </p>
             <h1
               id="tool-detail-title"
@@ -90,7 +96,7 @@ function ToolDetailHero({
               </span>
             </div>
 
-            <p className="mt-5 max-w-[50%] text-sm leading-relaxed text-white/85 sm:text-base">
+            <p className="mt-5 max-w-full text-sm leading-relaxed text-white/85 sm:max-w-[50%] sm:text-base">
               {tool.description}
             </p>
           </div>

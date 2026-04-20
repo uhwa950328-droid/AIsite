@@ -5,8 +5,11 @@
 :root {
   --background: #020203;
   --foreground: #fafafa;
-  --card: #0a0a0c;
-  --border: #1a1a1f;
+  /** 페이지 배경보다 눈에 띄게 밝혀 카드 영역 구분 */
+  --card: #14141c;
+  /** 호버 시 카드만 한 단계 더 밝게 */
+  --card-hover: #1e1e2c;
+  --border: #2a2a34;
   --muted: #a1a1aa;
   /** 좌·우·상단 패드 (헤더와 동일 값으로 맞춤) */
   --page-pad: 1rem;
@@ -43,6 +46,38 @@ body {
   .animate-nav-progress {
     animation: nav-progress-scan 1.05s linear infinite;
   }
+
+  /** 툴 상세 TOPn — 보라 뱃지 위 반짝 쉬인 */
+  .rank-top-badge {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .rank-top-badge::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      transparent 42%,
+      rgba(255, 255, 255, 0.55) 50%,
+      transparent 58%,
+      transparent 100%
+    );
+    transform: translateX(-130%);
+    animation: rank-badge-shine 3s linear infinite;
+    pointer-events: none;
+    mix-blend-mode: soft-light;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rank-top-badge::after {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 @keyframes nav-progress-scan {
@@ -51,5 +86,14 @@ body {
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+@keyframes rank-badge-shine {
+  0% {
+    transform: translateX(-130%);
+  }
+  100% {
+    transform: translateX(230%);
   }
 }

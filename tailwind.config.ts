@@ -13,8 +13,12 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
         card: "var(--card)",
+        "card-hover": "var(--card-hover)",
         border: "var(--border)",
         muted: "var(--muted)",
+      },
+      fontSize: {
+        medium: ["1rem", { lineHeight: "1.5rem" }],
       },
     },
   },
