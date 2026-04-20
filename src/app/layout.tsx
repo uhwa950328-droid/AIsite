@@ -5,6 +5,16 @@ import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import "./globals.css";
 
+const defaultSiteUrl = "http://localhost:3000";
+
+function getMetadataBase(): URL {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  if (explicit) return new URL(explicit);
+  if (process.env.VERCEL_URL)
+    return new URL(`https://${process.env.VERCEL_URL}`);
+  return new URL(defaultSiteUrl);
+}
+
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -16,12 +26,37 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
+const ogTitle = "AI Review";
+const ogDescription = "AI 툴 랭킹과 카테고리별 목록, 리뷰";
+
 export const metadata: Metadata = {
-  title: "AI Review",
-  description: "AI 툴 랭킹과 카테고리별 목록, 리뷰",
+  metadataBase: getMetadataBase(),
+  title: ogTitle,
+  description: ogDescription,
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
+  },
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    siteName: ogTitle,
+    title: ogTitle,
+    description: ogDescription,
+    images: [
+      {
+        url: "/og.png",
+        width: 1024,
+        height: 386,
+        alt: "AI TOOL RANKING",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: ogTitle,
+    description: ogDescription,
+    images: ["/og.png"],
   },
 };
 
