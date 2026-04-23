@@ -1,6 +1,10 @@
 import type { Tool } from "@/types/tool";
 import type { Review } from "@/types/review";
 
+/** reviews 테이블 조회 시 항상 이 컬럼만 사용 (비밀 토큰은 별도 테이블). */
+export const REVIEW_PUBLIC_COLUMNS =
+  "id, tool_id, nickname, rating, body, created_at" as const;
+
 export type ToolRow = {
   id: string;
   name: string;
@@ -17,10 +21,18 @@ export type ReviewRow = {
   id: string;
   tool_id: string;
   nickname: string;
-  rating: number;
+  /** PostgREST/Realtime JSON에서 숫자·문자열 모두 올 수 있음 */
+  rating: number | string;
   body: string;
   created_at: string;
 };
+
+/** 1–5 범위로 맞춤. 잘못된 값은 5로 폴백(표시·별 UI 크래시 방지). */
+export function normalizeReviewRating(value: unknown): number {
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return 5;
+  return Math.min(5, Math.max(1, n));
+}
 
 export function mapToolRow(row: ToolRow): Tool {
   const avg =
@@ -45,7 +57,7 @@ export function mapReviewRow(row: ReviewRow): Review {
     id: row.id,
     toolId: row.tool_id,
     nickname: row.nickname,
-    rating: row.rating,
+    rating: normalizeReviewRating(row.rating),
     body: row.body,
     createdAt: row.created_at,
   };

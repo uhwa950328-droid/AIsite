@@ -1,6 +1,10 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { mapReviewRow, type ReviewRow } from "@/lib/supabase/mappers";
+import {
+  mapReviewRow,
+  REVIEW_PUBLIC_COLUMNS,
+  type ReviewRow,
+} from "@/lib/supabase/mappers";
 import type { Review } from "@/types/review";
 
 export async function fetchReviewsForTool(toolId: string): Promise<Review[]> {
@@ -15,7 +19,7 @@ export async function fetchReviewsForTool(toolId: string): Promise<Review[]> {
 
   const { data, error } = await supabase
     .from("reviews")
-    .select("*")
+    .select(REVIEW_PUBLIC_COLUMNS)
     .eq("tool_id", toolId)
     .order("created_at", { ascending: false });
 

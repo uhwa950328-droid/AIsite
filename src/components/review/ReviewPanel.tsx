@@ -6,7 +6,17 @@ import type { Review } from "@/types/review";
 import { ReviewItem } from "@/components/review/ReviewItem";
 import { ReviewForm } from "@/components/review/ReviewForm";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { mapReviewRow, type ReviewRow } from "@/lib/supabase/mappers";
+import {
+  mapReviewRow,
+  REVIEW_PUBLIC_COLUMNS,
+  type ReviewRow,
+} from "@/lib/supabase/mappers";
+import {
+  forgetReviewEditToken,
+  getAllReviewEditTokenIds,
+  getReviewEditToken,
+  rememberReviewEditToken,
+} from "@/lib/review-tokens";
 import { cn } from "@/lib/utils";
 
 type ReviewPanelProps = {
@@ -55,6 +65,10 @@ export function ReviewPanel({
     sortReviews(initialReviews),
   );
   const [composerExpanded, setComposerExpanded] = useState(false);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [myReviewIds, setMyReviewIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const composerExpandedRef = useRef(false);
   /** 스크롤로 자동 펼침을 이미 한 번 썼는지 (방문당 1회) */
   const scrollToOpenDoneRef = useRef(false);
@@ -69,6 +83,10 @@ export function ReviewPanel({
   useEffect(() => {
     setReviews((prev) => mergeReviewsFromServer(prev, initialReviews));
   }, [initialReviews]);
+
+  useEffect(() => {
+    setMyReviewIds(new Set(getAllReviewEditTokenIds()));
+  }, []);
 
   const supabase = supabaseEnabled ? getSupabaseBrowserClient() : null;
 
@@ -137,6 +155,7 @@ export function ReviewPanel({
             if (scrollAccum.current >= SCROLL_DOWN_TO_OPEN_ACCUM_PX) {
               scrollToOpenDoneRef.current = true;
               composerExpandedRef.current = true;
+              setEditingReview(null);
               setComposerExpanded(true);
               scrollAccum.current = 0;
               scrollDir.current = null;
@@ -168,6 +187,7 @@ export function ReviewPanel({
     scrollDir.current = null;
     composerExpandedRef.current = false;
     setComposerExpanded(false);
+    setEditingReview(null);
   }, []);
 
   useEffect(() => {
@@ -179,40 +199,70 @@ export function ReviewPanel({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [composerExpanded, closeComposer]);
 
-  const handleSubmit = useCallback(
+  const createReview = useCallback(
     async (payload: { nickname: string; rating: number; body: string }) => {
       if (supabase) {
-        const { data, error } = await supabase
-          .from("reviews")
-          .insert({
-            tool_id: toolId,
-            nickname: payload.nickname,
-            rating: payload.rating,
-            body: payload.body,
-          })
-          .select()
-          .single();
+        if (typeof crypto === "undefined" || !crypto.randomUUID) {
+          alert(
+            "이 브라우저에서는 리뷰 등록을 지원하지 않습니다. 최신 브라우저로 시도해 주세요.",
+          );
+          throw new Error("crypto.randomUUID unavailable");
+        }
+        const editToken = crypto.randomUUID();
+        const { data: insertedId, error } = await supabase.rpc(
+          "insert_review",
+          {
+            p_tool_id: toolId,
+            p_nickname: payload.nickname,
+            p_rating: payload.rating,
+            p_body: payload.body,
+            p_edit_token: editToken,
+          },
+        );
 
         if (error) {
           alert(error.message);
           throw error;
         }
-        if (data) {
-          const r = mapReviewRow(data as ReviewRow);
-          setReviews((prev) => {
-            if (prev.some((x) => x.id === r.id)) return prev;
-            return sortReviews([r, ...prev]);
-          });
+        if (insertedId == null || insertedId === "") {
+          alert("리뷰를 저장하지 못했습니다.");
+          throw new Error("insert_review returned empty");
         }
+
+        const idStr = String(insertedId);
+        const { data: row, error: rowErr } = await supabase
+          .from("reviews")
+          .select(REVIEW_PUBLIC_COLUMNS)
+          .eq("id", idStr)
+          .single();
+
+        if (rowErr || !row) {
+          alert(rowErr?.message ?? "리뷰를 불러오지 못했습니다.");
+          throw rowErr ?? new Error("missing row");
+        }
+
+        const r = mapReviewRow(row as ReviewRow);
+        rememberReviewEditToken(idStr, editToken);
+        setMyReviewIds((prev) => new Set(prev).add(idStr));
+        setReviews((prev) => {
+          if (prev.some((x) => x.id === r.id)) return prev;
+          return sortReviews([r, ...prev]);
+        });
         router.refresh();
         closeComposer();
         return;
       }
 
+      const editToken =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `local-${Date.now()}-${Math.random()}`;
       const id =
         typeof crypto !== "undefined" && crypto.randomUUID
           ? crypto.randomUUID()
           : `local-${Date.now()}`;
+      rememberReviewEditToken(id, editToken);
+      setMyReviewIds((prev) => new Set(prev).add(id));
       setReviews((prev) =>
         sortReviews([
           {
@@ -231,6 +281,128 @@ export function ReviewPanel({
     [supabase, toolId, router, closeComposer],
   );
 
+  const updateReview = useCallback(
+    async (
+      reviewId: string,
+      payload: { nickname: string; rating: number; body: string },
+    ) => {
+      const token = getReviewEditToken(reviewId);
+      if (!token) {
+        alert("이 기기에서 수정할 수 없는 평가입니다.");
+        throw new Error("no edit token");
+      }
+
+      if (supabase) {
+        const { data: ok, error } = await supabase.rpc(
+          "update_review_by_token",
+          {
+            p_review_id: reviewId,
+            p_edit_token: token,
+            p_nickname: payload.nickname,
+            p_rating: payload.rating,
+            p_body: payload.body,
+          },
+        );
+
+        if (error) {
+          alert(error.message);
+          throw error;
+        }
+        if (!ok) {
+          alert("수정에 실패했습니다. 다시 시도해 주세요.");
+          throw new Error("update_review_by_token returned false");
+        }
+
+        setReviews((prev) =>
+          sortReviews(
+            prev.map((r) =>
+              r.id === reviewId
+                ? {
+                    ...r,
+                    nickname: payload.nickname,
+                    rating: payload.rating,
+                    body: payload.body,
+                  }
+                : r,
+            ),
+          ),
+        );
+        router.refresh();
+        closeComposer();
+        return;
+      }
+
+      setReviews((prev) =>
+        sortReviews(
+          prev.map((r) =>
+            r.id === reviewId
+              ? {
+                  ...r,
+                  nickname: payload.nickname,
+                  rating: payload.rating,
+                  body: payload.body,
+                }
+              : r,
+          ),
+        ),
+      );
+      closeComposer();
+    },
+    [supabase, router, closeComposer],
+  );
+
+  const handleDeleteReview = useCallback(
+    (r: Review) => {
+      if (!confirm("이 평가를 삭제할까요?")) return;
+
+      void (async () => {
+        const token = getReviewEditToken(r.id);
+        if (!token) {
+          alert("이 기기에서 삭제할 수 없는 평가입니다.");
+          return;
+        }
+
+        if (supabase) {
+          const { data: ok, error } = await supabase.rpc(
+            "delete_review_by_token",
+            {
+              p_review_id: r.id,
+              p_edit_token: token,
+            },
+          );
+
+          if (error) {
+            alert(error.message);
+            return;
+          }
+          if (!ok) {
+            alert("삭제에 실패했습니다. 다시 시도해 주세요.");
+            return;
+          }
+        }
+
+        forgetReviewEditToken(r.id);
+        setMyReviewIds((prev) => {
+          const next = new Set(prev);
+          next.delete(r.id);
+          return next;
+        });
+        setReviews((prev) => prev.filter((x) => x.id !== r.id));
+        router.refresh();
+      })();
+    },
+    [supabase, router],
+  );
+
+  const handleStartEdit = useCallback((r: Review) => {
+    lastScrollY.current = window.scrollY;
+    scrollAccum.current = 0;
+    scrollDir.current = null;
+    composerExpandedRef.current = true;
+    setEditingReview(r);
+    setComposerExpanded(true);
+  }, []);
+
   const bottomPad = composerExpanded
     ? "pb-[calc(13rem+env(safe-area-inset-bottom))] sm:pb-[calc(14rem+env(safe-area-inset-bottom))]"
     : "pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(7rem+env(safe-area-inset-bottom))]";
@@ -243,7 +415,15 @@ export function ReviewPanel({
             아직 평가가 없습니다. 첫 평가를 남겨보세요.
           </p>
         ) : (
-          reviews.map((r) => <ReviewItem key={r.id} review={r} />)
+          reviews.map((r) => (
+            <ReviewItem
+              key={r.id}
+              review={r}
+              isMine={myReviewIds.has(r.id)}
+              onEdit={handleStartEdit}
+              onDelete={handleDeleteReview}
+            />
+          ))
         )}
       </section>
 
@@ -261,8 +441,20 @@ export function ReviewPanel({
             >
               <div className="w-full overflow-hidden transition-[max-height,opacity,transform] duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] will-change-[max-height,opacity,transform] max-h-[min(70vh,560px)] translate-y-0 opacity-100">
                 <ReviewForm
+                  key={editingReview?.id ?? "create"}
                   className="mb-4 sm:mb-6"
-                  onSubmit={handleSubmit}
+                  heading={editingReview ? "리뷰 수정" : "평점 남기기"}
+                  submitLabel={editingReview ? "저장하기" : "등록하기"}
+                  defaultNickname={editingReview?.nickname}
+                  defaultRating={editingReview?.rating}
+                  defaultBody={editingReview?.body}
+                  onSubmit={async (payload) => {
+                    if (editingReview) {
+                      await updateReview(editingReview.id, payload);
+                    } else {
+                      await createReview(payload);
+                    }
+                  }}
                   onClose={closeComposer}
                 />
               </div>
@@ -280,6 +472,7 @@ export function ReviewPanel({
                 lastScrollY.current = window.scrollY;
                 scrollAccum.current = 0;
                 scrollDir.current = null;
+                setEditingReview(null);
                 composerExpandedRef.current = true;
                 setComposerExpanded(true);
               }}

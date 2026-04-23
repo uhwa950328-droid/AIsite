@@ -1,5 +1,6 @@
 import type { Review } from "@/types/review";
 import { Card } from "@/components/ui/Card";
+import { normalizeReviewRating } from "@/lib/supabase/mappers";
 import { PartialStarsRow } from "@/components/review/PartialStars";
 import { ReviewReactionBar } from "@/components/review/ReviewReactionBar";
 import { cn } from "@/lib/utils";
@@ -7,6 +8,10 @@ import { cn } from "@/lib/utils";
 type ReviewItemProps = {
   review: Review;
   className?: string;
+  /** 이 기기에 저장된 수정 토큰이 있으면 좋아요 대신 수정·삭제 표시 */
+  isMine?: boolean;
+  onEdit?: (review: Review) => void;
+  onDelete?: (review: Review) => void;
 };
 
 function formatDate(iso: string) {
@@ -29,17 +34,25 @@ function formatDate(iso: string) {
   }
 }
 
-export function ReviewItem({ review, className }: ReviewItemProps) {
+export function ReviewItem({
+  review,
+  className,
+  isMine = false,
+  onEdit,
+  onDelete,
+}: ReviewItemProps) {
+  const rating = normalizeReviewRating(review.rating);
+
   return (
     <article className={cn(className)}>
       <Card className="border-0 bg-card px-6 py-4 shadow-lg shadow-black/30 transition-colors duration-200 sm:px-8 sm:py-5">
         <div className="flex min-w-0 flex-col items-stretch gap-4 overflow-x-visible sm:flex-row sm:flex-nowrap sm:items-center sm:gap-8 sm:overflow-x-auto">
           <div className="flex shrink-0 flex-row flex-nowrap items-center gap-2 text-sm font-bold tabular-nums leading-none sm:text-base">
             <PartialStarsRow
-              value={review.rating}
-              ariaLabel={`${review.rating}점 만점 5점`}
+              value={rating}
+              ariaLabel={`${rating}점 만점 5점`}
             />
-            <span className="text-zinc-300">{review.rating.toFixed(1)}</span>
+            <span className="text-zinc-300">{rating.toFixed(1)}</span>
           </div>
 
           <div className="min-w-0 w-full sm:flex-1">
@@ -59,7 +72,30 @@ export function ReviewItem({ review, className }: ReviewItemProps) {
           </div>
 
           <div className="self-start sm:self-auto">
-            <ReviewReactionBar />
+            {isMine && onEdit && onDelete ? (
+              <div
+                className="flex shrink-0 flex-row items-center gap-2 sm:gap-3"
+                role="group"
+                aria-label="내 리뷰 관리"
+              >
+                <button
+                  type="button"
+                  onClick={() => onEdit(review)}
+                  className="rounded-md px-2 py-1 text-xs font-medium text-zinc-400 transition-colors hover:bg-white/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 sm:text-sm"
+                >
+                  수정
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDelete(review)}
+                  className="rounded-md px-2 py-1 text-xs font-medium text-zinc-500 transition-colors hover:bg-red-500/10 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 sm:text-sm"
+                >
+                  삭제
+                </button>
+              </div>
+            ) : (
+              <ReviewReactionBar />
+            )}
           </div>
         </div>
       </Card>

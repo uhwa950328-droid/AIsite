@@ -14,21 +14,39 @@ type ReviewFormProps = {
   /** 패널·모달 등에서 폼을 접을 때 */
   onClose?: () => void;
   className?: string;
+  heading?: string;
+  submitLabel?: string;
+  defaultNickname?: string;
+  defaultRating?: number;
+  defaultBody?: string;
 };
 
-export function ReviewForm({ onSubmit, onClose, className }: ReviewFormProps) {
-  const [nickname, setNickname] = useState("");
-  const [rating, setRating] = useState(5);
-  const [body, setBody] = useState("");
+export function ReviewForm({
+  onSubmit,
+  onClose,
+  className,
+  heading = "평점 남기기",
+  submitLabel = "등록하기",
+  defaultNickname,
+  defaultRating,
+  defaultBody,
+}: ReviewFormProps) {
+  const [nickname, setNickname] = useState(() => defaultNickname ?? "");
+  const [rating, setRating] = useState(() => defaultRating ?? 5);
+  const [body, setBody] = useState(() => defaultBody ?? "");
 
   useEffect(() => {
+    if (defaultNickname != null && defaultNickname !== "") {
+      setNickname(defaultNickname);
+      return;
+    }
     try {
       const saved = localStorage.getItem(NICK_KEY);
       if (saved) setNickname(saved);
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [defaultNickname]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,7 +77,7 @@ export function ReviewForm({ onSubmit, onClose, className }: ReviewFormProps) {
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-base font-bold text-foreground">평점 남기기</h3>
+        <h3 className="text-base font-bold text-foreground">{heading}</h3>
         {onClose ? (
           <button
             type="button"
@@ -133,7 +151,7 @@ export function ReviewForm({ onSubmit, onClose, className }: ReviewFormProps) {
         type="submit"
         className="w-full rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 py-2.5 text-sm font-semibold text-white transition hover:opacity-95 active:scale-[0.99]"
       >
-        등록하기
+        {submitLabel}
       </button>
     </form>
   );
