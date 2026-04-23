@@ -70,7 +70,7 @@ export function ReviewPanel({
     () => new Set(),
   );
   const composerExpandedRef = useRef(false);
-  /** 스크롤로 자동 펼침을 이미 한 번 썼는지 (방문당 1회) */
+  /** 이 페이지에서 평가 시트가 한 번이라도 열렸으면 스크롤 자동 펼침 비활성화 */
   const scrollToOpenDoneRef = useRef(false);
   const lastScrollY = useRef(0);
   const scrollAccum = useRef(0);
@@ -78,6 +78,9 @@ export function ReviewPanel({
 
   useEffect(() => {
     composerExpandedRef.current = composerExpanded;
+    if (composerExpanded) {
+      scrollToOpenDoneRef.current = true;
+    }
   }, [composerExpanded]);
 
   useEffect(() => {
@@ -153,7 +156,6 @@ export function ReviewPanel({
             }
             scrollAccum.current += delta;
             if (scrollAccum.current >= SCROLL_DOWN_TO_OPEN_ACCUM_PX) {
-              scrollToOpenDoneRef.current = true;
               composerExpandedRef.current = true;
               setEditingReview(null);
               setComposerExpanded(true);
