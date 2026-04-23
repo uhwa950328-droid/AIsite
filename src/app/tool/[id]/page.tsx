@@ -7,6 +7,7 @@ import { ReviewSectionSummary } from "@/components/review/ReviewSectionSummary";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { fetchReviewsForTool } from "@/lib/queries/reviews";
 import { fetchToolById } from "@/lib/queries/tools";
+import { isRemoteImageSrc } from "@/lib/image";
 import type { Tool } from "@/types/tool";
 
 type PageProps = {
@@ -22,10 +23,6 @@ export async function generateMetadata({ params }: PageProps) {
     title: `${tool.name} — AI Review`,
     description: tool.tagline,
   };
-}
-
-function isRemoteImageSrc(src: string) {
-  return /^https?:\/\//i.test(src);
 }
 
 function ToolDetailHero({

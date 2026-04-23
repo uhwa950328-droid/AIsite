@@ -1,6 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Tool } from "@/types/tool";
 import { Card } from "@/components/ui/Card";
+import { isRemoteImageSrc } from "@/lib/image";
 import { cn } from "@/lib/utils";
 import { ReviewSnippetRotator } from "@/components/ranking/ReviewSnippetRotator";
 
@@ -36,6 +38,7 @@ function Stars({ value }: { value: number }) {
 export function RankingCard({ tool, className }: RankingCardProps) {
   const hasReviews = tool.reviewCount > 0;
   const snippets = tool.reviewSnippets ?? [];
+  const shot = tool.screenshotSrc?.trim();
 
   return (
     <Link
@@ -47,6 +50,18 @@ export function RankingCard({ tool, className }: RankingCardProps) {
     >
       <Card className="border border-border bg-card p-5 shadow-lg shadow-black/30 transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:border-violet-500/40 group-hover:bg-card-hover group-hover:shadow-xl group-hover:shadow-black/50 group-hover:shadow-[0_0_32px_-8px_rgba(139,92,246,0.2)] group-hover:ring-2 group-hover:ring-violet-500/40">
         <div className="flex items-start gap-4">
+          {shot ? (
+            <div className="relative h-[4.5rem] w-[7.25rem] shrink-0 overflow-hidden rounded-xl bg-zinc-900 ring-1 ring-white/10 transition-transform duration-200 ease-out group-hover:scale-[1.02] group-hover:ring-white/15">
+              <Image
+                src={shot}
+                alt={`${tool.name} 화면 미리보기`}
+                fill
+                className="object-cover object-top"
+                sizes="116px"
+                unoptimized={isRemoteImageSrc(shot)}
+              />
+            </div>
+          ) : null}
           <div
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600/30 to-fuchsia-600/20 text-sm font-bold text-violet-200 ring-1 ring-white/10 transition-transform duration-200 ease-out group-hover:scale-105 group-hover:from-violet-600/40 group-hover:to-fuchsia-600/30"
             aria-label={hasReviews ? `순위 ${tool.rank}위` : "순위 없음"}
