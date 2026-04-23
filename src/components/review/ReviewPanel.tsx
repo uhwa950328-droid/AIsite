@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Review } from "@/types/review";
 import { ReviewItem } from "@/components/review/ReviewItem";
 import { ReviewForm } from "@/components/review/ReviewForm";
@@ -44,17 +44,6 @@ function mergeReviewsFromServer(prev: Review[], server: Review[]): Review[] {
   return sortReviews(Array.from(byId.values()));
 }
 
-/** 접힌 상태에서 아래로 이 정도 스크롤하면 작성 폼 자동 펼침 */
-const SCROLL_DOWN_TO_OPEN_ACCUM_PX = 56;
-
-function isTypingInReviewComposer(): boolean {
-  const el = document.activeElement;
-  if (!el || !(el instanceof HTMLElement)) return false;
-  const tag = el.tagName;
-  if (tag !== "INPUT" && tag !== "TEXTAREA") return false;
-  return el.closest("[data-review-composer]") !== null;
-}
-
 export function ReviewPanel({
   toolId,
   initialReviews,
@@ -69,19 +58,6 @@ export function ReviewPanel({
   const [myReviewIds, setMyReviewIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const composerExpandedRef = useRef(false);
-  /** 이 페이지에서 평가 시트가 한 번이라도 열렸으면 스크롤 자동 펼침 비활성화 */
-  const scrollToOpenDoneRef = useRef(false);
-  const lastScrollY = useRef(0);
-  const scrollAccum = useRef(0);
-  const scrollDir = useRef<"down" | null>(null);
-
-  useEffect(() => {
-    composerExpandedRef.current = composerExpanded;
-    if (composerExpanded) {
-      scrollToOpenDoneRef.current = true;
-    }
-  }, [composerExpanded]);
 
   useEffect(() => {
     setReviews((prev) => mergeReviewsFromServer(prev, initialReviews));
@@ -123,71 +99,7 @@ export function ReviewPanel({
     };
   }, [supabase, toolId, router]);
 
-  useEffect(() => {
-    lastScrollY.current = window.scrollY;
-    let raf = 0;
-
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        if (isTypingInReviewComposer()) {
-          lastScrollY.current = window.scrollY;
-          scrollDir.current = null;
-          scrollAccum.current = 0;
-          return;
-        }
-
-        const y = window.scrollY;
-        const delta = y - lastScrollY.current;
-        lastScrollY.current = y;
-
-        if (Math.abs(delta) < 0.5) return;
-
-        if (!composerExpandedRef.current) {
-          if (scrollToOpenDoneRef.current) {
-            scrollDir.current = null;
-            scrollAccum.current = 0;
-            return;
-          }
-          if (delta > 0) {
-            if (scrollDir.current !== "down") {
-              scrollAccum.current = 0;
-              scrollDir.current = "down";
-            }
-            scrollAccum.current += delta;
-            if (scrollAccum.current >= SCROLL_DOWN_TO_OPEN_ACCUM_PX) {
-              composerExpandedRef.current = true;
-              setEditingReview(null);
-              setComposerExpanded(true);
-              scrollAccum.current = 0;
-              scrollDir.current = null;
-              lastScrollY.current = window.scrollY;
-            }
-          } else {
-            scrollDir.current = null;
-            scrollAccum.current = 0;
-          }
-          return;
-        }
-
-        // 펼친 뒤에는 스크롤로 접지 않음 — 닫기·제출만 접힘
-        scrollDir.current = null;
-        scrollAccum.current = 0;
-      });
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, []);
-
   const closeComposer = useCallback(() => {
-    lastScrollY.current = window.scrollY;
-    scrollAccum.current = 0;
-    scrollDir.current = null;
-    composerExpandedRef.current = false;
     setComposerExpanded(false);
     setEditingReview(null);
   }, []);
@@ -397,10 +309,6 @@ export function ReviewPanel({
   );
 
   const handleStartEdit = useCallback((r: Review) => {
-    lastScrollY.current = window.scrollY;
-    scrollAccum.current = 0;
-    scrollDir.current = null;
-    composerExpandedRef.current = true;
     setEditingReview(r);
     setComposerExpanded(true);
   }, []);
@@ -471,11 +379,7 @@ export function ReviewPanel({
               className="rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-950/40 ring-1 ring-white/15 transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99]"
               aria-label="평점 남기기"
               onClick={() => {
-                lastScrollY.current = window.scrollY;
-                scrollAccum.current = 0;
-                scrollDir.current = null;
                 setEditingReview(null);
-                composerExpandedRef.current = true;
                 setComposerExpanded(true);
               }}
             >
